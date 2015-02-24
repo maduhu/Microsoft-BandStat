@@ -23,7 +23,6 @@ $RECYCLE.BIN/
 
 # OSX
 # =========================
-
 .DS_Store
 .AppleDouble
 .LSOverride
@@ -41,3 +40,47 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+
+build/
+bin/
+gen/
+tmp/
+.idea/
+.gradle/
+.settings/
+.externalToolBuilders/
+out/
+proguard/
+
+dump.txt
+seeds.txt
+usage.txt
+
+.metadata
+.classpath
+.loadpath
+.cproject
+.buildpath
+.project
+.DS_Store
+local.properties
+
+build.gradle
+gradle.properties
+settings.gradle
+proguard-rules.pro
+
+gradlew
+gradlew.bat
+
+*.iml
+*.apk
+*.ap_
+*.dex
+*.class
+*.pydevproject
+*.tmp
+*.bak
+*.swp
+*~.nib
+*.launch

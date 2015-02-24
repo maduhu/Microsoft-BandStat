@@ -1,0 +1,167 @@
+package com.dendriticspine.bandstat.bandstat;
+
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.support.v7.app.ActionBarActivity;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.TextView;
+
+import com.microsoft.band.BandClient;
+import com.microsoft.band.BandClientManager;
+import com.microsoft.band.ConnectionResult;
+import com.microsoft.band.BandDeviceInfo;
+import com.microsoft.band.BandException;
+import com.microsoft.band.BandPendingResult;
+import com.microsoft.band.sensors.BandAccelerometerEventListener;
+import com.microsoft.band.sensors.BandHeartRateEvent;
+import com.microsoft.band.sensors.BandHeartRateEventListener;
+import com.microsoft.band.sensors.BandSkinTemperatureEvent;
+import com.microsoft.band.sensors.BandSkinTemperatureEventListener;
+import com.microsoft.band.sensors.BandAccelerometerEvent;
+import com.microsoft.band.sensors.BandAccelerometerEventListener;
+
+
+public class MainActivity extends ActionBarActivity {
+    BandDeviceInfo[] pairedBands;
+    BandClient bandClient;
+    TextView BandVersion;
+    TextView BandHR;
+    TextView BandTemp;
+    TextView BandFVersion;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        pairedBands = BandClientManager.getInstance().getPairedBands();
+        bandClient = BandClientManager.getInstance().create(getApplicationContext(), pairedBands[0]);
+
+        BandVersion = (TextView) findViewById(R.id.BandVer);
+        BandHR = (TextView) findViewById(R.id.BandHR);
+        BandTemp = (TextView) findViewById(R.id.BandTemp);
+        BandFVersion = (TextView) findViewById(R.id.BandFVer);
+
+        // Note: the BandClient.Connect method must be called from a background thread. An exception
+        // will be thrown if called from the UI thread.
+        new Thread(new Runnable() {
+            public void run() {
+                try {
+                    helloMSBand();
+                } catch (BandException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    public void helloMSBand() throws BandException {
+        BandPendingResult<ConnectionResult> pendingResult = bandClient.connect();
+        final String hwVersion;
+        final String fwVersion;
+        try {
+            ConnectionResult result = pendingResult.await();
+            if(result == ConnectionResult.OK) {
+                try {
+                    BandPendingResult<String> pendingVersion = bandClient.getFirmwareVersion();
+                    fwVersion = pendingVersion.await();
+                    pendingVersion = bandClient.getHardwareVersion();
+                    hwVersion = pendingVersion.await();
+                    BandVersion.post(new Runnable() {
+                        @Override
+                        public void run() { BandVersion.setText(hwVersion);
+                        }
+                    });
+                    BandFVersion.post(new Runnable() {
+                        @Override
+                        public void run() { BandFVersion.setText(fwVersion);
+                        }
+                    });
+                } catch (InterruptedException ex) {
+                    // catch
+                } catch(BandException ex) {
+                    // catch
+                }
+
+                BandHeartRateEventListener heartRateListener = new BandHeartRateEventListener() {
+                    public void onBandHeartRateChanged(BandHeartRateEvent bandHeartRateEvent) {
+                    final String HR = String.valueOf(bandHeartRateEvent.getHeartRate());
+                    BandHR.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            BandHR.setText(HR);
+                        }
+                    });
+                    }
+                };
+
+                BandSkinTemperatureEventListener skinTemperatureEventListener = new BandSkinTemperatureEventListener() {
+                    @Override
+                    public void onBandSkinTemperatureChanged(BandSkinTemperatureEvent bandSkinTemperatureEvent) {
+                    final String TempF = String.valueOf(bandSkinTemperatureEvent.getTemperature());
+                    BandTemp.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            BandTemp.setText(TempF);
+                        }
+                    });
+                    }
+                };
+
+
+                try {
+                    bandClient.getSensorManager().registerHeartRateEventListener(heartRateListener);
+                } catch(BandException ex) {
+                    // catch
+                }
+
+                try {
+                    bandClient.getSensorManager().registerSkinTemperatureEventListener(skinTemperatureEventListener);
+                } catch(BandException ex) {
+                    // catch
+                }
+
+                try {
+                    // Create a bitmap for the Me Tile image, must be 310x102 pixels
+                    Bitmap image = Bitmap.createBitmap(310, 102, Bitmap.Config.ARGB_4444);
+                    image.eraseColor(Color.DKGRAY);
+                    //Bitmap meTileBitmap = Bitmap.createBitmap(310, 102, null);
+                    bandClient.getPersonalizationManager().setMeTileImage(image).await();
+                } catch (InterruptedException e) {
+                    // catch
+                } catch (BandException e) {
+                    // catch
+                }
+            } else {
+                BandVersion.setText("Connection failed.. ");
+            }
+        } catch(InterruptedException ex) {
+            // catch
+        } catch(BandException ex) {
+            // catch
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+}
