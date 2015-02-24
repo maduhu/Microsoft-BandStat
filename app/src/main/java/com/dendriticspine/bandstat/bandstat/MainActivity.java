@@ -21,6 +21,7 @@ import com.microsoft.band.sensors.BandSkinTemperatureEvent;
 import com.microsoft.band.sensors.BandSkinTemperatureEventListener;
 import com.microsoft.band.sensors.BandAccelerometerEvent;
 import com.microsoft.band.sensors.BandAccelerometerEventListener;
+import com.microsoft.band.sensors.SampleRate;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -30,6 +31,8 @@ public class MainActivity extends ActionBarActivity {
     TextView BandHR;
     TextView BandTemp;
     TextView BandFVersion;
+    TextView BandAccel;
+    TextView BandGyro;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +45,8 @@ public class MainActivity extends ActionBarActivity {
         BandHR = (TextView) findViewById(R.id.BandHR);
         BandTemp = (TextView) findViewById(R.id.BandTemp);
         BandFVersion = (TextView) findViewById(R.id.BandFVer);
+        BandAccel = (TextView) findViewById(R.id.BandAccel);
+        BandGyro = (TextView) findViewById(R.id.BandGyro);
 
         // Note: the BandClient.Connect method must be called from a background thread. An exception
         // will be thrown if called from the UI thread.
@@ -58,16 +63,14 @@ public class MainActivity extends ActionBarActivity {
 
     public void helloMSBand() throws BandException {
         BandPendingResult<ConnectionResult> pendingResult = bandClient.connect();
-        final String hwVersion;
-        final String fwVersion;
         try {
             ConnectionResult result = pendingResult.await();
             if(result == ConnectionResult.OK) {
                 try {
                     BandPendingResult<String> pendingVersion = bandClient.getFirmwareVersion();
-                    fwVersion = pendingVersion.await();
+                    final String fwVersion = pendingVersion.await();
                     pendingVersion = bandClient.getHardwareVersion();
-                    hwVersion = pendingVersion.await();
+                    final String hwVersion = pendingVersion.await();
                     BandVersion.post(new Runnable() {
                         @Override
                         public void run() { BandVersion.setText(hwVersion);
@@ -99,16 +102,36 @@ public class MainActivity extends ActionBarActivity {
                 BandSkinTemperatureEventListener skinTemperatureEventListener = new BandSkinTemperatureEventListener() {
                     @Override
                     public void onBandSkinTemperatureChanged(BandSkinTemperatureEvent bandSkinTemperatureEvent) {
-                    final String TempF = String.valueOf(bandSkinTemperatureEvent.getTemperature());
-                    BandTemp.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            BandTemp.setText(TempF);
-                        }
-                    });
+                        final String TempF = String.valueOf(bandSkinTemperatureEvent.getTemperature());
+                        BandTemp.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                BandTemp.setText(TempF);
+                            }
+                        });
                     }
                 };
 
+                BandAccelerometerEventListener accelerometerEventListener = new BandAccelerometerEventListener() {
+                    @Override
+                    public void onBandAccelerometerChanged(BandAccelerometerEvent bandAccelerometerEvent) {
+                        final String AccX = String.valueOf(bandAccelerometerEvent.getAccelerationX());
+                        final String AccY = String.valueOf(bandAccelerometerEvent.getAccelerationY());
+                        final String AccZ = String.valueOf(bandAccelerometerEvent.getAccelerationZ());
+                        BandAccel.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                BandAccel.setText("X: " + AccX + " Y: " + AccY + " Z: " + AccZ);
+                            }
+                        });
+                    }
+                };
+
+                try {
+                    bandClient.getSensorManager().registerAccelerometerEventListener(accelerometerEventListener, SampleRate.MS128);
+                } catch(BandException ex) {
+                    // catch
+                }
 
                 try {
                     bandClient.getSensorManager().registerHeartRateEventListener(heartRateListener);
