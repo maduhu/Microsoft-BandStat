@@ -161,7 +161,6 @@ public class MainActivity extends ActionBarActivity {
                     }
                 };
 
-
                 try {
                     bandClient.getSensorManager().registerUVEventListener(uvEventListener);
                 } catch(BandException ex) {
@@ -192,17 +191,17 @@ public class MainActivity extends ActionBarActivity {
                     // catch
                 }
 
-                try {
-                    // Create a bitmap for the Me Tile image, must be 310x102 pixels
-                    Bitmap image = Bitmap.createBitmap(310, 102, Bitmap.Config.ARGB_4444);
-                    image.eraseColor(Color.DKGRAY);
-                    //Bitmap meTileBitmap = Bitmap.createBitmap(310, 102, null);
-                    bandClient.getPersonalizationManager().setMeTileImage(image).await();
-                } catch (InterruptedException e) {
-                    // catch
-                } catch (BandException e) {
-                    // catch
-                }
+//                try {
+//                    // Create a bitmap for the Me Tile image, must be 310x102 pixels
+//                    Bitmap image = Bitmap.createBitmap(310, 102, Bitmap.Config.ARGB_4444);
+//                    image.eraseColor(Color.DKGRAY);
+//                    //Bitmap meTileBitmap = Bitmap.createBitmap(310, 102, null);
+//                    bandClient.getPersonalizationManager().setMeTileImage(image).await();
+//                } catch (InterruptedException e) {
+//                    // catch
+//                } catch (BandException e) {
+//                    // catch
+//                }
             } else {
                 BandVersion.setText("Connection failed.. ");
             }
