@@ -21,6 +21,10 @@ import com.microsoft.band.sensors.BandSkinTemperatureEvent;
 import com.microsoft.band.sensors.BandSkinTemperatureEventListener;
 import com.microsoft.band.sensors.BandAccelerometerEvent;
 import com.microsoft.band.sensors.BandAccelerometerEventListener;
+import com.microsoft.band.sensors.BandGyroscopeEvent;
+import com.microsoft.band.sensors.BandGyroscopeEventListener;
+import com.microsoft.band.sensors.BandUVEvent;
+import com.microsoft.band.sensors.BandUVEventListener;
 import com.microsoft.band.sensors.SampleRate;
 
 
@@ -33,6 +37,7 @@ public class MainActivity extends ActionBarActivity {
     TextView BandFVersion;
     TextView BandAccel;
     TextView BandGyro;
+    TextView BandUV;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +52,7 @@ public class MainActivity extends ActionBarActivity {
         BandFVersion = (TextView) findViewById(R.id.BandFVer);
         BandAccel = (TextView) findViewById(R.id.BandAccel);
         BandGyro = (TextView) findViewById(R.id.BandGyro);
+        BandUV = (TextView) findViewById(R.id.BandUV);
 
         // Note: the BandClient.Connect method must be called from a background thread. An exception
         // will be thrown if called from the UI thread.
@@ -115,22 +121,63 @@ public class MainActivity extends ActionBarActivity {
                 BandAccelerometerEventListener accelerometerEventListener = new BandAccelerometerEventListener() {
                     @Override
                     public void onBandAccelerometerChanged(BandAccelerometerEvent bandAccelerometerEvent) {
-                        final String AccX = String.valueOf(bandAccelerometerEvent.getAccelerationX());
-                        final String AccY = String.valueOf(bandAccelerometerEvent.getAccelerationY());
-                        final String AccZ = String.valueOf(bandAccelerometerEvent.getAccelerationZ());
+                        final String AccX = String.format("%.2f", bandAccelerometerEvent.getAccelerationX());
+                        final String AccY = String.format("%.2f", bandAccelerometerEvent.getAccelerationY());
+                        final String AccZ = String.format("%.2f", bandAccelerometerEvent.getAccelerationZ());
                         BandAccel.post(new Runnable() {
                             @Override
                             public void run() {
-                                BandAccel.setText("X: " + AccX + " Y: " + AccY + " Z: " + AccZ);
+                                BandAccel.setText("X " + AccX + ", Y " + AccY + ", Z " + AccZ);
                             }
                         });
                     }
                 };
 
+                BandGyroscopeEventListener gyroscopeEventListener = new BandGyroscopeEventListener() {
+                    @Override
+                    public void onBandGyroscopeChanged(BandGyroscopeEvent bandGyroscopeEvent) {
+                        final String GyrX = String.format("%.2f", bandGyroscopeEvent.getAngularVelocityX());
+                        final String GyrY = String.format("%.2f", bandGyroscopeEvent.getAngularVelocityY());
+                        final String GyrZ = String.format("%.2f", bandGyroscopeEvent.getAngularVelocityZ());
+                                BandGyro.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                BandGyro.setText("X " + GyrX + ", Y " + GyrY + ", Z " + GyrZ);
+                            }
+                        });
+                    }
+                };
+
+                BandUVEventListener uvEventListener = new BandUVEventListener() {
+                    @Override
+                    public void onBandUVChanged(BandUVEvent bandUVEvent) {
+                        final String UVRead = String.valueOf(bandUVEvent.getUVIndexLevel());
+                        BandUV.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                BandUV.setText(UVRead);
+                            }
+                        });
+                    }
+                };
+
+
+                try {
+                    bandClient.getSensorManager().registerUVEventListener(uvEventListener);
+                } catch(BandException ex) {
+                    //catch
+                }
+
                 try {
                     bandClient.getSensorManager().registerAccelerometerEventListener(accelerometerEventListener, SampleRate.MS128);
                 } catch(BandException ex) {
                     // catch
+                }
+
+                try {
+                    bandClient.getSensorManager().registerGyroscopeEventListener(gyroscopeEventListener, SampleRate.MS128);
+                } catch(BandException ex) {
+
                 }
 
                 try {
